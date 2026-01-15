@@ -10,16 +10,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/deputatTyulkino/mesto-ad.git"
+    "url": "git+https://github.com/alexa-tx/mesto-ad"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/deputatTyulkino/mesto-ad/issues"
+    "url": "https://github.com/alexa-tx/mesto-ad/issues"
   },
-  "homepage": "https://github.com/deputatTyulkino/mesto-ad#readme",
+  "homepage": "https://github.com/alexa-tx/mesto-ad#readme",
   "devDependencies": {
     "vite": "^7.1.12"
   }
