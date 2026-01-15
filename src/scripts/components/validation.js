@@ -1,150 +1,85 @@
-function showInputError(formElement, inputElement, errorMessage, settings) {
+const showInputError = (formElement, inputElement, errorMessage, validationSettings) => {
   const errorElement = formElement.querySelector(`#${inputElement.id}-error`);
+  inputElement.classList.add(validationSettings.inputErrorClass);
   errorElement.textContent = errorMessage;
-  errorElement.classList.add(settings.errorClass);
-  inputElement.classList.add(settings.inputErrorClass);
-}
+  errorElement.classList.add(validationSettings.errorClass);
+};
 
-function hideInputError(formElement, inputElement, settings) {
+const hideInputError = (formElement, inputElement, validationSettings) => {
   const errorElement = formElement.querySelector(`#${inputElement.id}-error`);
-  errorElement.textContent = "";
-  errorElement.classList.remove(settings.errorClass);
-  inputElement.classList.remove(settings.inputErrorClass);
-}
+  inputElement.classList.remove(validationSettings.inputErrorClass);
+  errorElement.classList.remove(validationSettings.errorClass);
+  errorElement.textContent = '';
+};
 
-function checkInputValidity(formElement, inputElement, settings) {
-  const { inputErrorClass, errorClass } = settings;
-
-  if (!inputElement.value.trim()) {
-    showInputError(
-      formElement,
-      inputElement,
-      "Поле обязательно для заполнения",
-      settings
-    );
-    return;
-  }
-
-  const minLength =
-    inputElement.classList.contains("popup__input_type_name") ||
-    inputElement.classList.contains("popup__input_type_card-name")
-      ? 2
-      : 2;
-
-  const maxLength = inputElement.classList.contains("popup__input_type_name")
-    ? 40
-    : inputElement.classList.contains("popup__input_type_card-name")
-    ? 30
-    : inputElement.classList.contains("popup__input_type_description")
-    ? 200
-    : Infinity;
-
-  if (
-    inputElement.value.length < minLength ||
-    inputElement.value.length > maxLength
-  ) {
-    let message = "";
-    if (
-      inputElement.classList.contains("popup__input_type_name") ||
-      inputElement.classList.contains("popup__input_type_card-name")
-    ) {
-      message = "Длина должна быть от 2 до 40 символов (или 2–30 для названия)";
-    } else if (
-      inputElement.classList.contains("popup__input_type_description")
-    ) {
-      message = "Длина должна быть от 2 до 200 символов";
-    } else if (inputElement.classList.contains("popup__input_type_url")) {
-      message = "Введите корректную ссылку";
-    }
-    showInputError(formElement, inputElement, message, settings);
-    return;
-  }
-
-  if (
-    inputElement.classList.contains("popup__input_type_name") ||
-    inputElement.classList.contains("popup__input_type_card-name")
-  ) {
-    const regex = /^[a-zA-Zа-яА-ЯёЁ\s-]+$/;
-    if (!regex.test(inputElement.value)) {
-      const customMessage =
-        inputElement.dataset.errorMessage ||
-        "Разрешены только латинские, кириллические буквы, знаки дефиса и пробелы";
-      showInputError(formElement, inputElement, customMessage, settings);
-      return;
-    }
-  }
-
-  if (inputElement.classList.contains("popup__input_type_url")) {
-    const urlRegex = /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([\/\w .-]*)*\.(jpg|jpeg|png|gif|svg|webp)(\?.*)?$/i;
-    if (!urlRegex.test(inputElement.value)) {
-      showInputError(
-        formElement,
-        inputElement,
-        "Введите корректную ссылку",
-        settings
-      );
-      return;
-    }
-  }
-
-  hideInputError(formElement, inputElement, settings);
-}
-
-function hasInvalidInput(formElement, settings) {
-  const inputElements = formElement.querySelectorAll(settings.inputSelector);
-  return Array.from(inputElements).some((input) => !input.validity.valid);
-}
-
-function disableSubmitButton(formElement, settings) {
-  const submitButton = formElement.querySelector(settings.submitButtonSelector);
-  submitButton.disabled = true;
-  submitButton.classList.add(settings.inactiveButtonClass);
-}
-
-function enableSubmitButton(formElement, settings) {
-  const submitButton = formElement.querySelector(settings.submitButtonSelector);
-  submitButton.disabled = false;
-  submitButton.classList.remove(settings.inactiveButtonClass);
-}
-
-function toggleButtonState(formElement, settings) {
-  const isInvalid = hasInvalidInput(formElement, settings);
-  if (isInvalid) {
-    disableSubmitButton(formElement, settings);
+const checkInputValidity = (formElement, inputElement, validationSettings) => {
+  if (inputElement.validity.patternMismatch){
+    inputElement.setCustomValidity(inputElement.dataset.errorMessage)
   } else {
-    enableSubmitButton(formElement, settings);
+    inputElement.setCustomValidity('')
   }
+
+  if (!inputElement.validity.valid) {
+    showInputError(formElement, inputElement, inputElement.validationMessage, validationSettings);
+  } else {
+    hideInputError(formElement, inputElement, validationSettings);
+  }
+};
+
+const hasInvalidInput = (inputList) => {
+  return inputList.some((inputElement) => {
+    return !inputElement.validity.valid;
+  });
+};
+
+const disableSubmitButton = (buttonElement, validationSettings) => {
+  buttonElement.classList.add(validationSettings.inactiveButtonClass)
+  buttonElement.disabled = true
 }
 
-function setEventListeners(formElement, settings) {
-  const inputElements = formElement.querySelectorAll(settings.inputSelector);
+const enableSubmitButton = (buttonElement, validationSettings) => {
+  buttonElement.classList.remove(validationSettings.inactiveButtonClass)
+  buttonElement.disabled = false
+}
 
-  inputElements.forEach((input) => {
-    input.addEventListener("input", () => {
-      checkInputValidity(formElement, input, settings);
-      toggleButtonState(formElement, settings);
+const toggleButtonState = (inputList, buttonElement, validationSettings) => {
+  if (hasInvalidInput(inputList)) {
+    disableSubmitButton(buttonElement, validationSettings)
+  } else {
+    enableSubmitButton (buttonElement, validationSettings)
+  }
+};
+
+const setEventListeners = (formElement, validationSettings) => {
+  const inputList = Array.from(formElement.querySelectorAll(validationSettings.inputSelector));
+  const buttonElement = formElement.querySelector(validationSettings.submitButtonSelector);
+
+  toggleButtonState(inputList, buttonElement, validationSettings);
+
+  inputList.forEach((inputElement) => {
+    inputElement.addEventListener('input', function () {
+      checkInputValidity(formElement, inputElement, validationSettings);
+      toggleButtonState(inputList, buttonElement, validationSettings);
     });
   });
+};
+
+export const clearValidation = (formElement, validationSettings) => {
+  const inputList = Array.from(formElement.querySelectorAll(validationSettings.inputSelector));
+  const buttonElement = formElement.querySelector(validationSettings.submitButtonSelector);
+
+  inputList.forEach((inputElement) => {
+    hideInputError(formElement, inputElement, validationSettings)
+  })
+  disableSubmitButton(buttonElement, validationSettings)
 }
 
-function clearValidation(formElement, settings) {
-  const inputElements = formElement.querySelectorAll(settings.inputSelector);
-  inputElements.forEach((input) => {
-    hideInputError(formElement, input, settings);
-  });
-  disableSubmitButton(formElement, settings);
-}
-
-function enableValidation(settings) {
-  const formElements = document.querySelectorAll(settings.formSelector);
-  formElements.forEach((formElement) => {
-    formElement.querySelectorAll(settings.inputSelector).forEach((input) => {
-      input.removeEventListener("input", () => {});
+export const enableValidation = (validationSettings) => {
+  const formList = Array.from(document.querySelectorAll(validationSettings.formSelector));
+  formList.forEach((formElement) => {
+    formElement.addEventListener('submit', function (evt) {
+      evt.preventDefault();
     });
-
-    setEventListeners(formElement, settings);
-    toggleButtonState(formElement, settings);
+    setEventListeners(formElement, validationSettings);
   });
-}
-
-export { enableValidation, clearValidation };
+};
